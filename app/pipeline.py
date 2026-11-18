@@ -71,6 +71,15 @@ class Pipeline:
         self.sender = sender
         self.antiscam = AntiScam(app.antiscam)
         self._locks: dict[str, asyncio.Lock] = {}
+        # источники со свободным текстом: ключевые слова ищем и в начале описания
+        self.text_sources = frozenset(
+            name for name, cfg in app.sources.items() if cfg.opt("keywords_in_text", False)
+        )
+        self.source_caps: dict[str, int] = {
+            name: int(cfg.opt("max_in_digest"))
+            for name, cfg in app.sources.items()
+            if cfg.opt("max_in_digest") is not None
+        }
 
     async def _admin(self, text: str) -> None:
         log.warning("ADMIN: %s", text)
@@ -129,16 +138,35 @@ class Pipeline:
             profile,
             min_salary=state.min_salary,
             hidden_companies=self.db.feedback_companies(profile.id),
+            text_sources=self.text_sources,
         )
         res = flt.apply(kept)
         report.rejected = dict(res.rejected)
         disliked = self.db.feedback_titles(profile.id)
-        main = rank(res.kept, profile, self.app.scoring, disliked_titles=disliked)
-        free = rank(res.freelance, profile, self.app.scoring, disliked_titles=disliked)
+        ts = self.text_sources
+        sc = self.app.scoring
+        main = self._cap(rank(res.kept, profile, sc, disliked_titles=disliked, text_sources=ts))
+        free = self._cap(
+            rank(res.freelance, profile, sc, disliked_titles=disliked, text_sources=ts)
+        )
         limit = self.app.schedule.max_per_digest
         free_cap = min(len(free), max(limit // 3, limit - len(main))) if free else 0
         report.freelance = free[:free_cap]
         report.main = main[: limit - len(report.freelance)]
+
+    def _cap(self, ranked: list[Vacancy]) -> list[Vacancy]:
+        """Не больше max_in_digest карточек из одного источника (например, Telegram)."""
+        if not self.source_caps:
+            return ranked
+        used: dict[str, int] = {}
+        out = []
+        for v in ranked:
+            cap = self.source_caps.get(v.source)
+            if cap is not None and used.get(v.source, 0) >= cap:
+                continue
+            used[v.source] = used.get(v.source, 0) + 1
+            out.append(v)
+        return out
 
     async def run_profile(
         self, profile_id: str, *, dry_run: bool = False, manual: bool = False

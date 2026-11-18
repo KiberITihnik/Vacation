@@ -42,6 +42,12 @@ class PoliteClient:
             self._last = time.monotonic()
 
     async def get_json(self, url: str, params: dict[str, Any] | None = None) -> Any:
+        return (await self.get(url, params)).json()
+
+    async def get_text(self, url: str, params: dict[str, Any] | None = None) -> str:
+        return (await self.get(url, params)).text
+
+    async def get(self, url: str, params: dict[str, Any] | None = None) -> httpx.Response:
         last_exc: Exception | None = None
         for attempt in range(1, self.cfg.retries + 1):
             await self._throttle()
@@ -52,7 +58,7 @@ class PoliteClient:
                         f"HTTP {resp.status_code}", request=resp.request, response=resp
                     )
                 resp.raise_for_status()
-                return resp.json()
+                return resp
             except (httpx.TransportError, httpx.HTTPStatusError) as exc:
                 last_exc = exc
                 status = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else 0

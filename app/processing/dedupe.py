@@ -11,7 +11,10 @@ TITLE_SIMILARITY = 90
 
 
 def fingerprint(v: Vacancy) -> str:
-    return "|".join((norm_company(v.company), norm_text(v.title), norm_city(v.city)))
+    company = norm_company(v.company)
+    base = "|".join((company, norm_text(v.title), norm_city(v.city)))
+    # без компании одинаковое название («Копирайтер») ещё не значит одну вакансию
+    return base if company else f"{base}|{v.source}:{v.external_id}"
 
 
 def _richness(v: Vacancy) -> tuple[int, int, int]:

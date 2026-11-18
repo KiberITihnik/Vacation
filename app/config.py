@@ -87,6 +87,7 @@ class ProfileConfig(BaseModel):
     sort: Literal["salary_desc", "relevance"] = "relevance"
     show_freelance_block: bool = False
     sources: list[str] = []
+    telegram_channels: list[str] = []
     about: str = ""
 
     @property

@@ -9,6 +9,9 @@ from app.config import ProfileConfig
 from app.models import Vacancy
 from app.processing.normalize import norm_city, norm_company, norm_text
 
+# В источниках со свободным текстом (Telegram) ключевые слова ищем и в начале поста.
+TEXT_MATCH_CHARS = 300
+
 
 @dataclass
 class FilterResult:
@@ -17,12 +20,37 @@ class FilterResult:
     rejected: Counter[str] = field(default_factory=Counter)
 
 
-def keyword_hits(profile: ProfileConfig, v: Vacancy) -> tuple[int, int]:
+def _stem(word: str) -> str:
+    """Грубая основа слова: «менеджера» и «менеджер» совпадут, «smm» — целиком."""
+    return word if len(word) <= 4 else word[: max(4, len(word) - 2)]
+
+
+def phrase_in(phrase: str, text: str) -> bool:
+    """Все слова фразы (с учётом окончаний) встречаются в тексте подряд."""
+    p_words = norm_text(phrase).split()
+    t_words = norm_text(text).split()
+    if not p_words or not t_words:
+        return False
+    stems = [_stem(w) for w in p_words]
+    n = len(stems)
+    for i in range(len(t_words) - n + 1):
+        if all(t_words[i + j].startswith(stems[j]) for j in range(n)):
+            return True
+    return False
+
+
+def keyword_hits(
+    profile: ProfileConfig, v: Vacancy, *, text_sources: frozenset[str] = frozenset()
+) -> tuple[int, int]:
     """(совпадения в названии, совпадения в описании)."""
-    title = f" {norm_text(v.title)} "
-    desc = f" {norm_text(v.description)} "
-    kws = [norm_text(k) for k in profile.include_keywords]
-    return sum(1 for k in kws if k and k in title), sum(1 for k in kws if k and k in desc)
+    title = v.title
+    if v.source in text_sources:
+        title = f"{v.title} {v.description[:TEXT_MATCH_CHARS]}"
+    kws = profile.include_keywords
+    return (
+        sum(1 for k in kws if phrase_in(k, title)),
+        sum(1 for k in kws if phrase_in(k, v.description)),
+    )
 
 
 class ProfileFilter:
@@ -32,17 +60,18 @@ class ProfileFilter:
         *,
         min_salary: int | None = None,
         hidden_companies: set[str] | None = None,
+        text_sources: frozenset[str] = frozenset(),
     ) -> None:
         self.p = profile
         self.min_salary = profile.min_salary if min_salary is None else min_salary
         self.hidden = {norm_company(c) for c in (hidden_companies or set()) if c}
         self.cities = {norm_city(c) for c in profile.locations.cities}
-        self.excl = [norm_text(k) for k in profile.exclude_keywords if k.strip()]
+        self.excl = [k for k in profile.exclude_keywords if k.strip()]
+        self.text_sources = text_sources
 
     def reason(self, v: Vacancy) -> str | None:
         """Причина отказа или None, если вакансия подходит."""
-        title = f" {norm_text(v.title)} "
-        if any(k in title for k in self.excl):
+        if any(phrase_in(k, v.title) for k in self.excl):
             return "stop_word"
         if self.hidden and norm_company(v.company) in self.hidden:
             return "hidden_company"
@@ -66,7 +95,7 @@ class ProfileFilter:
             and (v.salary_ref or 0) >= self.p.any_job_if_salary_from
             and v.salary_period != "piece"
         )
-        title_hits, _ = keyword_hits(self.p, v)
+        title_hits, _ = keyword_hits(self.p, v, text_sources=self.text_sources)
         if self.p.include_keywords and not title_hits and not salary_ok_for_any:
             return "keywords"
 

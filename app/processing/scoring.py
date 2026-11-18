@@ -28,10 +28,11 @@ def score(
     *,
     disliked_titles: list[str] | None = None,
     now: datetime | None = None,
+    text_sources: frozenset[str] = frozenset(),
 ) -> float:
     w = cfg.for_profile(profile.id)
     salary = min(1.0, (v.salary_ref or 0) / cfg.salary_cap) if cfg.salary_cap else 0.0
-    t_hits, d_hits = keyword_hits(profile, v)
+    t_hits, d_hits = keyword_hits(profile, v, text_sources=text_sources)
     kw = min(1.0, 0.7 * min(t_hits, 1) + 0.15 * min(t_hits - 1, 1) + 0.15 * min(d_hits, 1))
     remote = 1.0 if v.work_format == "remote" else 0.0
     s = (
@@ -57,9 +58,12 @@ def rank(
     *,
     disliked_titles: list[str] | None = None,
     now: datetime | None = None,
+    text_sources: frozenset[str] = frozenset(),
 ) -> list[Vacancy]:
     for v in vacancies:
-        v.score = score(v, profile, cfg, disliked_titles=disliked_titles, now=now)
+        v.score = score(
+            v, profile, cfg, disliked_titles=disliked_titles, now=now, text_sources=text_sources
+        )
     if profile.sort == "salary_desc":
         # с зарплатой — первыми, по убыванию; без зарплаты — после, по скорингу
         return sorted(

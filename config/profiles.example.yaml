@@ -26,7 +26,29 @@ sources:
   hh_email:
     enabled: false                # этап 3
   telegram_channels:
-    enabled: false                # этап 4
+    # Публичные каналы читаются через веб-превью t.me/s/<канал>, аккаунт не нужен.
+    # Список каналов для конкретного профиля — в profiles.<id>.telegram_channels.
+    enabled: true
+    max_age_days: 2               # посты старше — пропускаем
+    pages_per_channel: 1          # 1 страница ≈ 20 последних постов
+    min_post_length: 120          # короче — не вакансия
+    assume_remote: true           # каналы про удалёнку: формат не указан → удалённо
+    keywords_in_text: true        # ключевые слова ищем и в начале поста, не только в «названии»
+    max_in_digest: 7              # не больше стольких карточек из Telegram в одной подборке
+    delay_seconds: 1.5
+    common_channels:              # общие для обеих
+      - distantsiya
+      - finder_vc
+      - remote_ru
+      - workathome
+      - jobs_here
+      - remote_job_ru
+      - workvc
+      - tgjob
+      - profiwork
+      - kadrof_work
+      - freelance_ru
+      - chooseajob
 
 money:
   usd_rate: 90                    # для «$1000» и т.п.
@@ -78,7 +100,23 @@ profiles:
     any_job_if_salary_from: 80000   # «любая работа», если зарплата от
     exclude_keywords: [водитель, грузчик, курьер, охранник, повар, кладовщик, сварщик, разнорабоч]
     sort: salary_desc
-    sources: [hh_email, trudvsem, superjob]
+    sources: [hh_email, trudvsem, superjob, telegram_channels]
+    telegram_channels:            # без опыта, ассистенты, маркетплейсы, HR
+      - noexperience
+      - onlinevakansii
+      - jobs_start
+      - zapwork
+      - jobs_juniors_remote
+      - jobbyrussia
+      - POISK_ASSISTANTS
+      - academy_of_assistants
+      - BiznesAssistenti
+      - assistent_vakansii
+      - mpmanagers
+      - workmarketplaces
+      - work_hr
+      - hrwork
+      - Hey_hr
     about: >
       Без опыта работы, быстро обучаюсь, коммуникабельная, ответственная.
 
@@ -111,6 +149,30 @@ profiles:
     sort: relevance
     show_freelance_block: true
     sources: [hh_email, trudvsem, superjob, telegram_channels]
+    telegram_channels:            # тексты, редактура, медиа, SMM, фриланс
+      - textodromo
+      - self_ma
+      - work_editor
+      - Work4writers
+      - dddwork
+      - zhdemcv
+      - glvrd_job
+      - normrabota
+      - norm_work
+      - copywriter_vacancies
+      - textmoney
+      - work_copywriters
+      - kopirayter_kopirayting
+      - ninewriter
+      - digital_jobster
+      - vacancysmm
+      - dnative_job
+      - search_smm
+      - rabota_freelancee
+      - freelancechoice
+      - freelancetavern
+      - easy_freelance
+      - frilancekomfort
     about: >
       Опыт написания текстов: статьи, посты для соцсетей, SEO-тексты.
 
@@ -125,6 +187,16 @@ antiscam:
     - mlm
     - закладк
     - "re:без вложений.{0,40}до \\d"
+    - оплата за обучение
+    - обучение платное
+    - стартовый взнос
+    - доступ к базе
+    - выкуп товар
+    - ставить лайки
+    - написание отзывов
+    - "карт + на свое имя"
+    - "re:\\bдроп(ы|ов|ом|ами)?\\b"
+    - обнал
   warn:
     - пассивный доход
     - без вложений и опыта до
@@ -132,6 +204,10 @@ antiscam:
     - доход не ограничен
     - "re:до \\d{3}\\s?\\d{3}.{0,20}(в первый|за первый) месяц"
     - "re:пиши(те)? в (телеграм|whatsapp|ватсап|тг)"
+    - "re:пиши(те)? \\+ в (лс|личку|личные)"
+    - "re:от \\d[\\d\\s]{2,}\\s?(₽|р|руб)\\S*\\s*в день"
+    - подработка на телефоне
+    - работа с телефона
 
 scoring:
   salary_cap: 200000              # зарплата выше считается «максимально хорошей»

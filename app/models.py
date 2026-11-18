@@ -31,6 +31,7 @@ def utcnow() -> datetime:
 class Link(BaseModel):
     source: str
     url: str
+    label: str = ""  # например, @канал для Telegram
 
 
 class Vacancy(BaseModel):

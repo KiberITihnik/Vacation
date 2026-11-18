@@ -122,3 +122,20 @@ def test_render_card():
     assert 'href="https://example.org/1"' in text
     warn = render_card(make_vacancy(title="<script>", warnings=["mlm"]), now=NOW)
     assert warn.startswith("⚠️") and "&lt;script&gt;" in warn
+
+
+async def test_source_cap_limits_telegram(env, app_config):
+    pipe, src, sender = env
+    src.items = [
+        make_vacancy(
+            source="telegram_channels",
+            external_id=f"tg{i}",
+            title="Копирайтер",
+            company="",
+            work_format="remote",
+            description=f"пост {i}",
+        )
+        for i in range(12)
+    ]
+    rep = await pipe.run_profile("sister", dry_run=True)
+    assert len(rep.main) == app_config.sources["telegram_channels"].opt("max_in_digest") == 7

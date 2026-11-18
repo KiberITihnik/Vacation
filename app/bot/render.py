@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from html import escape
 
@@ -65,13 +66,44 @@ def render_age(published: datetime | None, now: datetime | None = None) -> str:
     return f"{days} дней назад"
 
 
+EXCERPT_SOURCES = {"telegram_channels"}
+_FIELD_LINE_RE = re.compile(
+    r"^\W*(компания|работодатель|формат|график|опыт|город|локация|зарплата|з/п|зп|оплата|доход"
+    r"|оклад|ваканси[яи]|должность|позиция)\b",
+    re.I,
+)
+_HASHTAGS_RE = re.compile(r"#\w+")
+EXCERPT_CHARS = 280
+
+
+def link_title(source: str, label: str = "") -> str:
+    return label or SOURCE_TITLES.get(source, source)
+
+
+def excerpt(v: Vacancy) -> str:
+    """Начало поста без строки с названием — для источников со свободным текстом."""
+    lines = [ln for ln in v.description.splitlines() if ln.strip()]
+    if lines and v.title[:20].lower() in lines[0].lower():
+        lines = lines[1:]
+    # поля, которые уже показаны в карточке, и строки из одних хэштегов не повторяем
+    lines = [
+        ln
+        for ln in lines
+        if not _FIELD_LINE_RE.match(ln) and not re.fullmatch(r"(\s*#\S+)+\s*", ln)
+    ]
+    text = " ".join(_HASHTAGS_RE.sub("", ln).strip() for ln in lines).strip()
+    if len(text) > EXCERPT_CHARS:
+        text = text[:EXCERPT_CHARS].rsplit(" ", 1)[0] + "…"
+    return text
+
+
 def render_card(v: Vacancy, *, now: datetime | None = None, html: bool = True) -> str:
     e = escape if html else (lambda s: s)
     company = e(v.company) or "компания не указана"
     place = " · ".join(x for x in (company, e(v.city), FORMAT_TITLES[v.work_format]) if x)
     exp = EXPERIENCE_TITLES[v.experience] + (" · обучение" if v.training else "")
-    links = v.all_links()
-    sources = ", ".join(dict.fromkeys(SOURCE_TITLES.get(lk.source, lk.source) for lk in links))
+    links = v.all_links()[:4]
+    sources = ", ".join(dict.fromkeys(link_title(lk.source, lk.label) for lk in links))
     lines = []
     if v.warnings:
         lines.append("⚠️ " + e("Проверьте внимательно: " + ", ".join(v.warnings)))
@@ -82,13 +114,15 @@ def render_card(v: Vacancy, *, now: datetime | None = None, html: bool = True) -
         f"🎓 {exp}",
         f"🕒 {render_age(v.published_at, now)} · {e(sources)}",
     ]
+    if v.source in EXCERPT_SOURCES and (ex := excerpt(v)):
+        lines.append(f"📝 {e(ex)}")
     if html:
         if len(links) == 1:
             lines.append(f'🔗 <a href="{escape(links[0].url, quote=True)}">Открыть вакансию</a>')
         else:
             parts = [
                 f'<a href="{escape(lk.url, quote=True)}">'
-                f"{escape(SOURCE_TITLES.get(lk.source, lk.source))}</a>"
+                f"{escape(link_title(lk.source, lk.label))}</a>"
                 for lk in links
             ]
             lines.append("🔗 " + " · ".join(parts))
