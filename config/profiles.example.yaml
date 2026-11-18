@@ -1,0 +1,142 @@
+# Все критерии подбора. Меняйте этот файл, код трогать не нужно.
+# Рабочая копия: config/profiles.yaml (в git не попадает). После правки перезапустите контейнер.
+
+schedule:
+  times: ["09:00", "18:00"]       # дважды в день, по TZ из .env
+  max_per_digest: 15
+  send_empty_notice: true
+  summary_if_more_than: 5         # сначала сводное сообщение, если карточек больше
+  now_cooldown_minutes: 30        # /now не чаще одного раза за столько минут
+
+http:
+  user_agent: "JobAlertsBot/0.1 (personal non-commercial job digest)"
+  timeout_seconds: 20
+  retries: 3
+  delay_seconds: 1.0              # пауза между запросами к одному источнику
+
+sources:
+  trudvsem:
+    enabled: true
+    base_url: "http://opendata.trudvsem.ru/api/v1"
+    page_size: 100
+    max_pages: 3                  # на один поисковый запрос
+    modified_days: 3              # брать вакансии, изменённые за последние N дней
+  superjob:
+    enabled: false                # этап 3
+  hh_email:
+    enabled: false                # этап 3
+  telegram_channels:
+    enabled: false                # этап 4
+
+money:
+  usd_rate: 90                    # для «$1000» и т.п.
+  eur_rate: 100
+  hours_per_month: 160            # для почасовой оплаты
+
+profiles:
+  girlfriend:
+    chat_id_env: GIRLFRIEND_CHAT_ID
+    title: "Подборка для тебя 💼"
+    locations:
+      cities: ["Челябинск"]
+      allow_remote: true
+      allow_office: true          # офис и гибрид в указанных городах
+    trudvsem_regions: ["7400000000000"]   # Челябинская область
+    experience: ["none", "unknown"]
+    min_salary: 50000
+    include_keywords:
+      - менеджер по продажам
+      - менеджер по работе с клиентами
+      - оператор колл-центра
+      - оператор call-центра
+      - оператор контакт-центра
+      - оператор чата
+      - администратор
+      - ассистент
+      - помощник руководителя
+      - офис-менеджер
+      - hr-ассистент
+      - рекрутер
+      - менеджер маркетплейс
+      - специалист поддержки
+      - специалист службы поддержки
+      - модератор
+    # Поисковые запросы к API. Если не задано — используются include_keywords.
+    search_queries:
+      - менеджер по продажам
+      - менеджер по работе с клиентами
+      - оператор
+      - администратор
+      - ассистент
+      - помощник руководителя
+      - офис-менеджер
+      - рекрутер
+      - маркетплейс
+      - поддержки
+      - модератор
+      - без опыта
+    any_job_if_salary_from: 80000   # «любая работа», если зарплата от
+    exclude_keywords: [водитель, грузчик, курьер, охранник, повар, кладовщик, сварщик, разнорабоч]
+    sort: salary_desc
+    sources: [hh_email, trudvsem, superjob]
+    about: >
+      Без опыта работы, быстро обучаюсь, коммуникабельная, ответственная.
+
+  sister:
+    chat_id_env: SISTER_CHAT_ID
+    title: "Вакансии для авторов ✍️"
+    locations:
+      cities: []
+      allow_remote: true
+      allow_office: false
+    trudvsem_regions: []            # пусто = вся Россия
+    experience: ["none", "1-3", "3-6", "unknown"]
+    warn_experience: ["3-6"]        # показывать с пометкой
+    min_salary: 40000
+    include_keywords:
+      - копирайтер
+      - рерайтер
+      - контент-менеджер
+      - контент менеджер
+      - автор статей
+      - автор текстов
+      - seo-копирайтер
+      - smm
+      - контент для соцсетей
+      - сценарист
+      - редактор
+      - корректор
+      - журналист
+    exclude_keywords: [дизайнер, видеомонтаж, таргетолог, бильд, выпускающий]
+    sort: relevance
+    show_freelance_block: true
+    sources: [hh_email, trudvsem, superjob, telegram_channels]
+    about: >
+      Опыт написания текстов: статьи, посты для соцсетей, SEO-тексты.
+
+antiscam:
+  # Подстрока ищется в названии и описании без учёта регистра.
+  # "a + b" — сработает, только если есть все части. "re:..." — регулярное выражение.
+  hide:
+    - вложени
+    - первоначальный взнос
+    - платное обучение
+    - сетевой маркетинг
+    - mlm
+    - закладк
+    - "re:без вложений.{0,40}до \\d"
+  warn:
+    - пассивный доход
+    - без вложений и опыта до
+    - криптовалют + без опыта
+    - доход не ограничен
+    - "re:до \\d{3}\\s?\\d{3}.{0,20}(в первый|за первый) месяц"
+    - "re:пиши(те)? в (телеграм|whatsapp|ватсап|тг)"
+
+scoring:
+  salary_cap: 200000              # зарплата выше считается «максимально хорошей»
+  freshness_days: 7               # старше — бонус свежести 0
+  warn_penalty: 0.5
+  weights:
+    girlfriend: {salary: 1.0, freshness: 0.3, keywords: 0.2, remote: 0.0}
+    sister:     {salary: 0.4, freshness: 0.3, keywords: 1.0, remote: 0.3}

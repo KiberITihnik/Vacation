@@ -1,0 +1,13 @@
+services:
+  job-alerts:
+    build: .
+    container_name: job-alerts
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: sqlite:///data/jobs.db
+      LOG_DIR: logs
+    volumes:
+      - ./data:/srv/data
+      - ./logs:/srv/logs
+      - ./config/profiles.yaml:/srv/config/profiles.yaml:ro

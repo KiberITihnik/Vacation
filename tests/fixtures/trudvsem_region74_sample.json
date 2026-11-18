@@ -1,0 +1,74 @@
+{
+  "status": "200",
+  "request": {"api": "v1"},
+  "meta": {"total": 4, "limit": 100},
+  "results": {
+    "vacancies": [
+      {"vacancy": {
+        "id": "a1b2c3d4-0001",
+        "source": "Работа России",
+        "region": {"region_code": "7400000000000", "name": "Челябинская область"},
+        "company": {"companycode": "1027400000001", "name": "ООО «Ромашка»", "inn": "7451000001"},
+        "creation-date": "2026-11-17",
+        "salary": "от 60000 до 90000",
+        "salary_min": 60000,
+        "salary_max": 90000,
+        "job-name": "Менеджер по работе с клиентами",
+        "vac_url": "https://trudvsem.ru/vacancy/card/1027400000001/a1b2c3d4-0001",
+        "employment": "Полная занятость",
+        "schedule": "Полный рабочий день",
+        "duty": "<p>Консультирование клиентов по телефону, ведение CRM. Обучение за счёт компании.</p>",
+        "category": {"specialisation": "Продажи, закупки, снабжение, торговля"},
+        "requirement": {"education": "Среднее", "experience": 0},
+        "addresses": {"address": [{"location": "Челябинская область, г Челябинск, ул Кирова, д 1"}]},
+        "currency": "«руб.»"
+      }},
+      {"vacancy": {
+        "id": "a1b2c3d4-0002",
+        "region": {"region_code": "7400000000000", "name": "Челябинская область"},
+        "company": {"companycode": "1027400000002", "name": "АО Логистика"},
+        "creation-date": "2026-11-16",
+        "salary": "от 70000",
+        "salary_min": 70000,
+        "salary_max": 0,
+        "job-name": "Водитель погрузчика",
+        "vac_url": "https://trudvsem.ru/vacancy/card/1027400000002/a1b2c3d4-0002",
+        "employment": "Полная занятость",
+        "schedule": "Сменный график",
+        "requirement": {"experience": 1},
+        "addresses": {"address": [{"location": "Челябинская область, г Копейск"}]}
+      }},
+      {"vacancy": {
+        "id": "a1b2c3d4-0003",
+        "region": {"region_code": "7700000000000", "name": "г. Москва"},
+        "company": {"name": "ООО Медиа Плюс"},
+        "creation-date": "2026-11-18",
+        "salary": "от 45000 до 65000",
+        "salary_min": 45000,
+        "salary_max": 65000,
+        "job-name": "Копирайтер (удаленно)",
+        "vac_url": "https://trudvsem.ru/vacancy/card/1/a1b2c3d4-0003",
+        "employment": "Полная занятость",
+        "schedule": "Удаленная работа",
+        "duty": "Написание статей для блога и SEO-текстов",
+        "requirement": {"experience": 1},
+        "addresses": {"address": [{"location": "г Москва, ул Тверская, д 1"}]}
+      }},
+      {"vacancy": {
+        "id": "a1b2c3d4-0004",
+        "region": {"region_code": "7400000000000", "name": "Челябинская область"},
+        "company": {"name": "ИП Иванов"},
+        "creation-date": "2026-11-18",
+        "salary": "от 150000",
+        "salary_min": 150000,
+        "salary_max": 300000,
+        "job-name": "Помощник руководителя",
+        "vac_url": "https://trudvsem.ru/vacancy/card/2/a1b2c3d4-0004",
+        "schedule": "Гибкий график",
+        "duty": "Сетевой маркетинг, пассивный доход. Нужен первоначальный взнос за стартовый набор.",
+        "requirement": {"experience": 0},
+        "addresses": {"address": [{"location": "г Челябинск"}]}
+      }}
+    ]
+  }
+}

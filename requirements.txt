@@ -1,0 +1,11 @@
+aiogram==3.32.0
+httpx==0.28.1
+pydantic==2.14.3
+pydantic-settings==2.16.3
+SQLAlchemy==2.1.9
+aiosqlite==0.22.1
+APScheduler==3.11.3
+imap-tools==1.16.0
+rapidfuzz==3.14.6
+selectolax==1.0.2
+PyYAML==6.0.3
